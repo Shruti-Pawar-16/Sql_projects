@@ -1,0 +1,96 @@
+-- EDA(EXPLORATORY DAATA ANALYSIS) FOR LAYOFF DATABASE
+
+SELECT *
+FROM layoffs_staging3;
+
+-- SELECTING MAXIMUM AND MINIMUM NUMBERE OF PEPOLE LAID OFF
+SELECT MAX(laid_off), MIN(laid_off)
+FROM layoffs_staging3;
+
+-- DISPLAYING TOTAL NO OF LAID OFF IN EACH COMPANY
+SELECT company ,SUM(laid_off)
+FROM layoffs_staging3
+GROUP BY company
+ORDER BY 2 DESC;
+
+
+-- DISPLAYING TOTAL NO OF LAID OFF ACCORDING TO LOCATION 
+SELECT location ,SUM(laid_off)
+FROM layoffs_staging3
+GROUP BY location
+ORDER BY 2 DESC;
+
+-- DISPLAYING TOTAL NO OF PEOPLE LAID OFF IN INDUSTRY
+SELECT industry ,SUM(laid_off)
+FROM layoffs_staging3
+GROUP BY industry
+ORDER BY 2 DESC;
+
+-- DISPLAYING TOTAL NO OF PEOPLE LAID OFF FROM EACH COUNTRY
+SELECT country ,SUM(laid_off)
+FROM layoffs_staging3
+GROUP BY country
+ORDER BY 2 DESC;
+
+-- DISPLAYING TOTAL NO OF PEOPLE LAID OFF ACCORDING TO STAGE
+SELECT stage ,SUM(laid_off)
+FROM layoffs_staging3
+GROUP BY stage
+ORDER BY 2 DESC;
+
+-- DISPLAYING TOTAL LAYOFF HAPPEND EVERY YEAR 2020 - 2025
+ SELECT YEAR(layoff_date) YEARS,SUM(laid_off) TOTAL_LAIDOFF
+ FROM layoffs_staging3
+ GROUP BY YEARS
+ ORDER BY YEARS;
+ 
+ -- SELECT MAX AND MIN DATE OF THIS DATASET
+ SELECT MIN(layoff_date) FIRST_DATE, MAX(layoff_date) LAST_DATE
+ FROM layoffs_staging3;
+
+-- DISPLAYING TOTAL FUND RAISED BY AN COMPANY AND NO OF TIMES THE FUND HAS BEEN RAISED
+SELECT company, SUM(fund_raised_millions) TOTAL_FUNDS_MILLIONS, COUNT(company) NO_OF_FUND_RAISED
+FROM layoffs_staging3
+GROUP BY company
+ORDER BY company;
+
+ -- SHOW COMPANY THAT HAVE LAYOFF IN INDIA
+ SELECT *
+ FROM layoffs_staging3
+ WHERE country = 'India'
+ ORDER BY layoff_date;
+
+-- COMPANY WISE ROLLING TOTAL
+WITH company_rolling AS(
+SELECT company, SUBSTR(layoff_date,1,7) MONTHS, SUM(laid_off) TOTAL
+FROM layoffs_staging3
+GROUP BY company, MONTHS
+)
+SELECT *,
+SUM(TOTAL) OVER (PARTITION BY company ORDER BY MONTHS) ROLLOING_TOTAL,
+DENSE_RANK() OVER(PARTITION BY company ORDER BY MONTHS) RANKS
+FROM company_rolling
+;
+ 
+-- COUNTRY WISE ROLLING TOTAL
+WITH country_rolling AS(
+SELECT country, SUBSTR(layoff_date,1,7) MONTHS, SUM(laid_off) TOTAL
+FROM layoffs_staging3
+GROUP BY country, MONTHS
+)
+SELECT *,
+SUM(TOTAL) OVER (PARTITION BY country ORDER BY MONTHS) ROLLOING_TOTAL
+FROM country_rolling
+;
+ 
+-- display running total of layoff by industry
+WITH industry_running AS (
+SELECT industry ,SUBSTR(layoff_date,1,7) YEARS, SUM(laid_off) TOTAL 
+FROM layoffs_staging3
+GROUP BY industry,YEARS
+ORDER BY 2 DESC
+)
+SELECT *,
+SUM(TOTAL) OVER(PARTITION BY industry ORDER BY YEARS) RUNNING_TOTAL
+FROM industry_running
+WHERE industry IS NOT NULL;
